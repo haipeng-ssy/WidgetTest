@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/item_layout"
+    android:layout_width="match_parent"
+    android:layout_height="80dip"
+    android:orientation="vertical"
+     >
+    <ImageView 
+        android:id="@+id/img_appw"
+        android:layout_width="80dip"
+        android:layout_height="60dip"
+        android:layout_centerHorizontal="true"
+        android:scaleType="fitXY"
+        android:layout_above="@+id/tv_appw"
+        />
+    <TextView
+        android:id="@+id/tv_appw"
+        android:layout_width="fill_parent"
+        android:layout_height="20dip"
+        android:text="Hello world!"
+        android:layout_alignParentBottom="true"
+        />
+
+</RelativeLayout>
