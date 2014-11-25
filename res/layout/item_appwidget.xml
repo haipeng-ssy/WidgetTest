@@ -13,6 +13,7 @@
         android:scaleType="fitXY"
         android:layout_above="@+id/tv_appw"
         />
+    
     <TextView
         android:id="@+id/tv_appw"
         android:layout_width="fill_parent"
