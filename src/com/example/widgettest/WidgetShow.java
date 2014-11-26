@@ -47,22 +47,12 @@ public class WidgetShow extends AppWidgetProvider {
 		if (intent.getAction().equals(singleAction)) {
 			int appWidgetId = intent.getIntExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, AppWidgetManager.INVALID_APPWIDGET_ID);
 			int viewIndex   = intent.getIntExtra(OnButtonClick, 0);
-			Toast.makeText(context, viewIndex+"", Toast.LENGTH_LONG).show();
-            
+			Toast.makeText(context, viewIndex+"", Toast.LENGTH_LONG).show(); 
 		}
-		
-//		if(intent.getAction().equals(Refresh)){
-//			
-//			RemoteViews rv = new RemoteViews(context.getPackageName(),
-//					R.layout.appwidget);
-////			appWidgetManager.updateAppWidget(context, rv);
-//			// setIntentAdapter
-//			Intent intent2 = new Intent(context,GridViewService.class);
-//			rv.setRemoteAdapter(R.id.gv_appw, intent2);
-//			appWidgetManager.updateAppWidget(componentName, rv);
-//		}
-//		onUpdate(context, appWidgetManager, appWidgetIds);
-
+		if(intent.getAction().equals(Refresh))
+		{
+			appWidgetManager.notifyAppWidgetViewDataChanged(appWidgetManager.getAppWidgetIds(componentName), R.id.gv_appw);
+		}
 	}
 
 	@Override

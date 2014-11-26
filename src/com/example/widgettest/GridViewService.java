@@ -1,11 +1,9 @@
 package com.example.widgettest;
 
-
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.HashMap;
-
 
 import org.apache.http.HttpResponse;
 import org.apache.http.HttpStatus;
@@ -22,15 +20,22 @@ import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.os.IBinder;
+import android.support.v4.util.LruCache;
+import android.util.Log;
 import android.widget.RemoteViews;
 import android.widget.RemoteViewsService;
+import android.widget.Toast;
 
 public class GridViewService extends RemoteViewsService {
 
 	static ArrayList<HashMap<String, Object>> array;
+	LruCacheImagerDownloader idl;
+	
+
 	@Override
 	public RemoteViewsFactory onGetViewFactory(Intent intent) {
 		// TODO Auto-generated method stub
+
 		return new GridRemoteViewsFactory(this, intent);
 	}
 
@@ -42,17 +47,14 @@ public class GridViewService extends RemoteViewsService {
 
 	public class GridRemoteViewsFactory implements RemoteViewsFactory {
 
-		
 		public Context context;
 		public int appWidgetId;
-		public String IMAGE_ITEM = "image_item";
-		public String TEXT_ITEM = "text_item";
-		ArrayList<HashMap<String, Object>> data;
+		public final static String IMAGE_ITEM = "image_item";
+		public final static String TEXT_ITEM = "text_item";
 
-		
 		private final String[] arrText = new String[] {
 				"http://www.baidu.com/img/bdlogo.png",
-				"http://www.baidu.com/img/bdlogo.png",
+				"http://www.sogou.com/images/logo/new/sogou.png",
 				"http://www.baidu.com/img/bdlogo.png",
 				"http://www.baidu.com/img/bdlogo.png" };
 		private int[] arrImages = new int[] { R.drawable.p1, R.drawable.p2,
@@ -65,19 +67,20 @@ public class GridViewService extends RemoteViewsService {
 			appWidgetId = intent.getIntExtra(
 					AppWidgetManager.EXTRA_APPWIDGET_ID,
 					AppWidgetManager.INVALID_APPWIDGET_ID);
-
 		}
+
 		RemoteViews rv;
+
 		@Override
 		public RemoteViews getViewAt(int position) {
 			// TODO Auto-generated method stub
 			HashMap<String, Object> map;
-			map = (HashMap<String, Object>) data.get(position);
+			map = (HashMap<String, Object>) array.get(position);
 
 			rv = new RemoteViews(context.getPackageName(),
 					R.layout.item_appwidget);
 			rv.setTextViewText(R.id.tv_appw, (String) map.get(TEXT_ITEM));
-			
+			rv.setImageViewBitmap(R.id.img_appw, (Bitmap) (map.get(IMAGE_ITEM)));
 			// GridView单元素的单击
 			Intent intent = new Intent();
 			intent.putExtra(WidgetShow.OnButtonClick, position);
@@ -86,15 +89,15 @@ public class GridViewService extends RemoteViewsService {
 			return rv;
 		}
 
-		
-
 		public void initData() {
-			data = new ArrayList<HashMap<String, Object>>();
+			array = new ArrayList<HashMap<String, Object>>();
 			for (int i = 0; i < arrText.length; i++) {
 				HashMap<String, Object> map = new HashMap<String, Object>();
-				map.put(IMAGE_ITEM, arrImages[i]);
+				Bitmap bitmap = BitmapFactory.decodeResource(getResources(),
+						arrImages[i]);
+				map.put(IMAGE_ITEM, bitmap);
 				map.put(TEXT_ITEM, arrText[i]);
-				data.add(map);
+				array.add(map);
 			}
 
 		}
@@ -103,27 +106,29 @@ public class GridViewService extends RemoteViewsService {
 		public void onCreate() {
 			// TODO Auto-generated method stub
 			initData();
-			Intent intent = new Intent();
-			intent.setAction(WidgetShow.Refresh);
-			sendBroadcast(intent);
+//			Toast.makeText(context, ""+array.size(), Toast.LENGTH_SHORT).show();
+			new LoaderImage().execute(arrText);
+            idl = new LruCacheImagerDownloader(context);
+            
 		}
 
 		@Override
 		public void onDataSetChanged() {
 			// TODO Auto-generated method stub
-            
+
 		}
 
 		@Override
 		public void onDestroy() {
 			// TODO Auto-generated method stub
-			data.clear();
+			array.clear();
+			
 		}
 
 		@Override
 		public int getCount() {
 			// TODO Auto-generated method stub
-			return data.size();
+			return array.size();
 		}
 
 		@Override
@@ -149,49 +154,53 @@ public class GridViewService extends RemoteViewsService {
 			// TODO Auto-generated method stub
 			return false;
 		}
-		
-		
 
 	}
-	
+
 	public class LoaderImage extends AsyncTask<String, Integer, Bitmap> {
 
 		protected Bitmap doInBackground(String... params) { // TODO
 			Bitmap bitmap = null;
-			int count = params.length;
-			boolean result;
-			HttpClient httpClient = new DefaultHttpClient();
-			/* String uri = arrText[0]; */
-			HttpGet get = new HttpGet(params[0]);
-			HttpResponse response;
-			try {
-				HashMap<String, Object> map;
-				response = httpClient.execute(get);
+			HashMap<String, Object> map;
+			for (int i = 0; i < params.length; i++) {
+				try {
+				
+				if ((idl.getBitmap(params[i]))!=null) {
+					bitmap = idl.getBitmap(params[i]);
+				} else {
+					int count = params.length;
+					HttpClient httpClient = new DefaultHttpClient();
+					HttpGet get = new HttpGet(params[i]);
+					HttpResponse response;
+				
+						response = httpClient.execute(get);
+						
+						if (response.getStatusLine().getStatusCode() == HttpStatus.SC_OK) {
+							InputStream is = response.getEntity().getContent();
+							bitmap = BitmapFactory.decodeStream(is);
+						}
+//						lruCache.put(params[i], bitmap);
+                        idl.addBitmapToCache(params[i], bitmap);
+                        idl.getBitmap(params[i]);
+					
+				
+				map = new HashMap<String, Object>();
+				map.put(GridRemoteViewsFactory.IMAGE_ITEM, bitmap);
+				map.put(GridRemoteViewsFactory.TEXT_ITEM, params[i]);
+				// array.clear();
+				array.add(map);
 
-				if (response.getStatusLine().getStatusCode() == HttpStatus.SC_OK) {
-
-					InputStream is = response.getEntity().getContent();
-					bitmap = BitmapFactory.decodeStream(is);
-				}
-				map = new HashMap<String,Object>();
-				map.put(params[0], bitmap);
-				array = new ArrayList<HashMap<String, Object>>();
-                array.add(map);
 				Intent intent = new Intent();
-			    intent.setAction(WidgetShow.Refresh);
-			    sendBroadcast(intent);
-			    
-			    AppWidgetManager am;
-			    am.notifyAppWidgetViewDataChanged(appWidgetId, viewId);
-			} catch (ClientProtocolException e) {
-				e.printStackTrace();
-
-			} catch (IOException e) {
-				// TODO Auto-generated catch block e.printStackTrace(); }
-				// return
-				// 1l;
-
+				intent.setAction(WidgetShow.Refresh);
+				sendBroadcast(intent);
 			}
+				
+				} catch (Exception e) {
+					e.printStackTrace();
+				}
+				
+			}
+
 			return bitmap;
 
 		}
@@ -199,8 +208,7 @@ public class GridViewService extends RemoteViewsService {
 		protected void onPostExecute(Bitmap result) {
 			// TODO Auto-generated method stub
 			super.onPostExecute(result);
-			
-			
+
 		}
 
 		protected void onProgressUpdate(Integer... values) {
@@ -208,6 +216,5 @@ public class GridViewService extends RemoteViewsService {
 			super.onProgressUpdate(values);
 		}
 	}
-
 
 }
