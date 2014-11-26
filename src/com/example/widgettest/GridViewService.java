@@ -1,5 +1,6 @@
 package com.example.widgettest;
 
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
@@ -30,7 +31,7 @@ public class GridViewService extends RemoteViewsService {
 
 	static ArrayList<HashMap<String, Object>> array;
 	LruCacheImagerDownloader idl;
-	
+	FileOutputStream fileOutputStream;
 
 	@Override
 	public RemoteViewsFactory onGetViewFactory(Intent intent) {
@@ -182,7 +183,8 @@ public class GridViewService extends RemoteViewsService {
 //						lruCache.put(params[i], bitmap);
                         idl.addBitmapToCache(params[i], bitmap);
                         idl.getBitmap(params[i]);
-					
+					    fileOutputStream = openFileOutput(params[i], Context.MODE_PRIVATE);
+//					    fileOutputStream.write(bitmap);
 				
 				map = new HashMap<String, Object>();
 				map.put(GridRemoteViewsFactory.IMAGE_ITEM, bitmap);
