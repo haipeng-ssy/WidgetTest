@@ -107,10 +107,11 @@ public class GridViewService extends RemoteViewsService {
 		public void onCreate() {
 			// TODO Auto-generated method stub
 			initData();
-//			Toast.makeText(context, ""+array.size(), Toast.LENGTH_SHORT).show();
+			// Toast.makeText(context, ""+array.size(),
+			// Toast.LENGTH_SHORT).show();
 			new LoaderImage().execute(arrText);
-            idl = new LruCacheImagerDownloader(context);
-            
+			idl = new LruCacheImagerDownloader(context);
+
 		}
 
 		@Override
@@ -123,7 +124,7 @@ public class GridViewService extends RemoteViewsService {
 		public void onDestroy() {
 			// TODO Auto-generated method stub
 			array.clear();
-			
+
 		}
 
 		@Override
@@ -165,42 +166,43 @@ public class GridViewService extends RemoteViewsService {
 			HashMap<String, Object> map;
 			for (int i = 0; i < params.length; i++) {
 				try {
-				
-				if ((idl.getBitmap(params[i]))!=null) {
-					bitmap = idl.getBitmap(params[i]);
-				} else {
-					int count = params.length;
-					HttpClient httpClient = new DefaultHttpClient();
-					HttpGet get = new HttpGet(params[i]);
-					HttpResponse response;
-				
+
+					if ((idl.getBitmap(params[i])) != null) {
+						bitmap = idl.getBitmap(params[i]);
+					} else {
+						int count = params.length;
+						HttpClient httpClient = new DefaultHttpClient();
+						HttpGet get = new HttpGet(params[i]);
+						HttpResponse response;
+
 						response = httpClient.execute(get);
-						
+
 						if (response.getStatusLine().getStatusCode() == HttpStatus.SC_OK) {
 							InputStream is = response.getEntity().getContent();
 							bitmap = BitmapFactory.decodeStream(is);
 						}
-//						lruCache.put(params[i], bitmap);
-                        idl.addBitmapToCache(params[i], bitmap);
-                        idl.getBitmap(params[i]);
-					    fileOutputStream = openFileOutput(params[i], Context.MODE_PRIVATE);
-//					    fileOutputStream.write(bitmap);
-				
-				map = new HashMap<String, Object>();
-				map.put(GridRemoteViewsFactory.IMAGE_ITEM, bitmap);
-				map.put(GridRemoteViewsFactory.TEXT_ITEM, params[i]);
-				// array.clear();
-				array.add(map);
+						// lruCache.put(params[i], bitmap);
+						idl.addBitmapToCache(params[i], bitmap);
+						idl.getBitmap(params[i]);
+						fileOutputStream = openFileOutput(params[i],
+								Context.MODE_PRIVATE);
+						// fileOutputStream.write(bitmap);
 
-				Intent intent = new Intent();
-				intent.setAction(WidgetShow.Refresh);
-				sendBroadcast(intent);
-			}
-				
+						map = new HashMap<String, Object>();
+						map.put(GridRemoteViewsFactory.IMAGE_ITEM, bitmap);
+						map.put(GridRemoteViewsFactory.TEXT_ITEM, params[i]);
+						// array.clear();
+						array.add(map);
+
+						Intent intent = new Intent();
+						intent.setAction(WidgetShow.Refresh);
+						sendBroadcast(intent);
+					}
+
 				} catch (Exception e) {
 					e.printStackTrace();
 				}
-				
+
 			}
 
 			return bitmap;
